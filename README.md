@@ -1,5 +1,7 @@
 # nixos-odroid-hc4
 
+[![License: MIT / GPL-2.0](https://img.shields.io/badge/license-MIT%20%2F%20GPL--2.0-blue.svg)](./LICENSE)
+
 NixOS support for the [Hardkernel ODROID HC4](https://wiki.odroid.com/odroid-hc4/odroid-hc4) (Amlogic S905X3, aarch64).
 
 Provides a complete SD card boot solution: U-Boot build with Amlogic FIP assembly, plus kernel-level fixes for two warm-reboot hang bugs that affect all HC4 units booting from SD.
