@@ -6,19 +6,33 @@
 # The resulting u-boot.bin must be written to raw sectors on the SD card:
 #   dd if=u-boot.bin of=/dev/sdX conv=fsync,notrunc bs=512 seek=1
 #
-# No upstream nixpkgs package exists for HC4 (PR #101454 never merged).
+# No upstream nixpkgs package exists for HC4: as of 2026-09-22 nixpkgs ships
+# only ubootOdroidC2 and ubootOdroidXU3. PR #101454 is sometimes cited here as
+# the reason, which is wrong twice over — it covered the C2/C4, not the HC4,
+# and it was closed unmerged on 2023-12-19. Nothing upstream is pending.
+#
+# nixos-hardware does have hardkernel/odroid-hc4, but it is fancontrol, a
+# watchdog and a dtb filter only — no U-Boot and neither reboot fix, so it
+# does not replace this. (Its fancontrol default expects a tachometer the HC4
+# does not have.)
+#
+# Note this build is NOT reproducible: the bl33 region differs between
+# otherwise identical builds, so `u-boot.bin` cannot be byte-compared to
+# decide whether a card carries this build. The bl2/bl30/bl31 prefix is
+# stable, and is what to compare instead.
+#
 # FIP assembly follows the approach from:
 #   https://git.p2502.net/max/odroid-hc4-uboot
 {pkgs}: let
   # Open-source Amlogic Meson64 FIP tools (replaces proprietary aml_encrypt_g12a)
   meson64-tools = pkgs.stdenv.mkDerivation {
     pname = "meson64-tools";
-    version = "unstable-2020-08-03";
+    version = "unstable-2023-07-25";
     src = pkgs.fetchFromGitHub {
       owner = "angerman";
       repo = "meson64-tools";
-      rev = "a2d57d11fd8b4242b903c10dca9d25f7f99d8ff0";
-      hash = "sha256-Wyx4ngfDN6jSEBwrgH8z44wntJEKMuCQz56MrU9mB5E=";
+      rev = "b09cefd1e001dbba14036857bf6e167bf1833f26";
+      hash = "sha256-/koIsslDNpaFHf1TV/0Xt0TiyhjL6tCz2oHQraYNhPA=";
     };
     buildInputs = [pkgs.openssl];
     nativeBuildInputs = [pkgs.python3];
@@ -27,7 +41,7 @@
       substituteInPlace mbedtls/programs/fuzz/Makefile --replace "python2" "python"
       substituteInPlace mbedtls/tests/Makefile --replace "python2" "python"
     '';
-    env.NIX_CFLAGS_COMPILE = "-Wno-error=implicit-function-declaration -Wno-error=builtin-declaration-mismatch -Wno-error=unused-result";
+    env.NIX_CFLAGS_COMPILE = "-Wno-error=unused-result";
     makeFlags = ["PREFIX=$(out)/bin"];
     meta = {
       description = "Tools for Amlogic Meson ARM64 platforms";
