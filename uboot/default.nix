@@ -48,6 +48,22 @@
 in
   pkgs.buildUBoot {
     defconfig = "odroid-hc4_defconfig";
+
+    # odroid-hc4_defconfig names no filesystem; U-Boot's BOOT_DEFAULTS_CMDS
+    # brings in ext2/ext4/FAT only, and FS_BTRFS has no default — it is
+    # selected by CMD_BTRFS alone. Without this a btrfs root is invisible to
+    # U-Boot, which then falls through to network boot: a board that answers
+    # ping and never starts a kernel (nas1, 2026-09-22).
+    extraConfig = ''
+      CONFIG_CMD_BTRFS=y
+    '';
+
+    # buildUBoot appends extraConfig to .config and does not re-run Kconfig,
+    # so nothing would resolve CMD_BTRFS's `select` of FS_BTRFS, ZSTD, LZO
+    # and the rest. olddefconfig does.
+    postConfigure = ''
+      make olddefconfig
+    '';
     extraMeta = {
       platforms = ["aarch64-linux"];
       license = pkgs.lib.licenses.unfreeRedistributableFirmware;

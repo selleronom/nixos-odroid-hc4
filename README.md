@@ -22,16 +22,28 @@ The SD card controller supports UHS modes and switches IO voltage from 3.3V to 1
 
 ## What you get
 
-| Output                                                  | Purpose                                                          |
-| ------------------------------------------------------- | --------------------------------------------------------------- |
-| `nixosModules.odroid-hc4`                               | NixOS module applying both warm-reboot fixes (`default` aliases it) |
-| `packages.x86_64-linux.uboot-odroid-hc4`                | U-Boot, cross-compiled + Amlogic FIP assembled (for image builds)  |
-| `packages.aarch64-linux.uboot-odroid-hc4`               | Same, built natively on aarch64                                 |
-| `formatter.{x86_64,aarch64}-linux`                      | `nix fmt` (alejandra)                                           |
+| Output                                    | Purpose                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `nixosModules.odroid-hc4`                 | NixOS module applying both warm-reboot fixes (`default` aliases it)                              |
+| `packages.x86_64-linux.uboot-odroid-hc4`  | U-Boot, cross-compiled + Amlogic FIP assembled. Needs binfmt: meson64-tools is built for aarch64 |
+| `packages.aarch64-linux.uboot-odroid-hc4` | Same, built natively. The one to use on an aarch64 builder                                       |
+| `formatter.{x86_64,aarch64}-linux`        | `nix fmt` (alejandra)                                                                            |
 
 A complete, copy-pasteable consumer flake lives in [`examples/`](./examples) —
 `flake.nix`, a minimal `configuration.nix`, and an `sd-image.nix` that produces
 a flashable image.
+
+## Filesystem support
+
+U-Boot reads the root filesystem to find `extlinux/extlinux.conf`, the kernel
+and the initrd. `odroid-hc4_defconfig` names no filesystem at all, and U-Boot's
+`BOOT_DEFAULTS_CMDS` selects ext2, ext4 and FAT only. `FS_BTRFS` has no default
+and is selected by `CMD_BTRFS` alone, so this build sets `CONFIG_CMD_BTRFS=y`
+and re-runs `olddefconfig` to resolve what it selects.
+
+Without it a btrfs root is invisible: U-Boot finds nothing bootable, falls
+through to the network bootmeth, and the board sits there answering ping with
+no kernel running.
 
 ## Prerequisites
 

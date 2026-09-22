@@ -9,8 +9,10 @@
     self,
     nixpkgs,
   }: let
-    # U-Boot must be cross-compiled from x86_64-linux; the FIP assembly
-    # tools (meson64-tools) are x86_64 only.
+    # meson64-tools builds and runs natively on aarch64 too — verified
+    # 2026-09-22 — so prefer packages.aarch64-linux on an aarch64 seat. The
+    # x86_64 outputs below cross-compile, and their meson64-tools is an
+    # aarch64 binary the x86_64 builder can only run under binfmt.
     x86Pkgs = nixpkgs.legacyPackages.x86_64-linux;
   in {
     # NixOS module — import this in your configuration
