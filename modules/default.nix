@@ -50,6 +50,7 @@ in {
         {
           stdenv,
           kernel,
+          kernelModuleMakeFlags,
         }:
           stdenv.mkDerivation {
             pname = "odroid-reboot";
@@ -58,14 +59,19 @@ in {
 
             nativeBuildInputs = kernel.moduleBuildDependencies;
 
-            makeFlags = [
-              "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
-            ];
+            # kernelModuleMakeFlags carries nixpkgs' module signing rule, which
+            # writes the odroid-reboot.ko.cer that the module aggregator
+            # requires of every out-of-tree module since nixpkgs 2026-10.
+            # modules_install is where it runs, so install through it.
+            makeFlags =
+              kernelModuleMakeFlags
+              ++ [
+                "KERNELDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+                "INSTALL_MOD_PATH=$(out)"
+                "INSTALL_MOD_DIR=extra"
+              ];
 
-            installPhase = ''
-              install -D odroid-reboot.ko \
-                $out/lib/modules/${kernel.modDirVersion}/extra/odroid-reboot.ko
-            '';
+            installTargets = ["modules_install"];
 
             meta.license = lib.licenses.gpl2;
           }
